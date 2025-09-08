@@ -25,6 +25,34 @@ jobs:
           echo "repo=$REPO" >> "$GITHUB_OUTPUT"
           echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve branch to push
+        id: branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE:-}" == "branch" && -n "${GITHUB_REF_NAME:-}" ]]; then
+            BR="$GITHUB_REF_NAME"
+          else
+            BR=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p' || true)
+            if [ -z "$BR" ]; then BR="master"; fi
+          fi
+          echo "branch=$BR" >> "$GITHUB_OUTPUT"
+
+      - name: Switch to target branch
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BR='${{ steps.branch.outputs.branch }}'
+          echo "Switching to branch: $BR"
+          git fetch origin "$BR" --depth=1 || true
+          # Prefer remote tracking if it exists; otherwise create/reset local branch
+          if git show-ref --verify --quiet "refs/remotes/origin/$BR"; then
+            git checkout -B "$BR" "origin/$BR"
+          else
+            git checkout -B "$BR"
+          fi
+
       - name: Update README badges
         shell: bash
         run: |
@@ -92,5 +120,9 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore(readme): ensure JitPack badges (latest tag + master build)"
+          branch: ${{ steps.branch.outputs.branch }}
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_author: AndreLesa <3635843+AndreLesa@users.noreply.github.com>
           file_pattern: |
             README*
