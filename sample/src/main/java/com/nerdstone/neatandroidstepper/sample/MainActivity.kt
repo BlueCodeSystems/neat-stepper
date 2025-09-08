@@ -23,6 +23,7 @@ class MainActivity : FragmentActivity(), StepperActions {
         neatStepperLayout.setUpViewWithAdapter(
             StepperPagerAdapter(
                 supportFragmentManager,
+                lifecycle,
                 mutableListOf(
                     StepOneFragment(
                         StepModel.Builder()

@@ -14,8 +14,7 @@ import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.viewpager.widget.ViewPager
-import androidx.viewpager.widget.ViewPager.OnPageChangeListener
+import androidx.viewpager2.widget.ViewPager2
 import com.nerdstone.neatandroidstepper.core.R
 import com.nerdstone.neatandroidstepper.core.domain.StepperActions
 import com.nerdstone.neatandroidstepper.core.model.StepperModel
@@ -29,7 +28,7 @@ import com.nerdstone.neatandroidstepper.core.utils.TintUtil
 class NeatStepperLayout : LinearLayout {
 
     private lateinit var stepperPagerAdapter: StepperPagerAdapter
-    private lateinit var stepperViewPager: ViewPager
+    private lateinit var stepperViewPager: ViewPager2
     private lateinit var stepperToolbar: Toolbar
     private lateinit var bottomNavigationLayout: ConstraintLayout
     private lateinit var startButton: Button
@@ -68,9 +67,8 @@ class NeatStepperLayout : LinearLayout {
         bindViews()
 
         stepperViewPager.apply {
-            setPageTransformer(true, DepthPageTransformer())
-            addOnPageChangeListener(object : OnPageChangeListener {
-
+            setPageTransformer(DepthPageTransformer())
+            registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                 override fun onPageSelected(position: Int) {
                     currentStepIndex = position
                     dotIndicator.setCurrentDot(position, true)
@@ -79,16 +77,6 @@ class NeatStepperLayout : LinearLayout {
                     showOrHidePreviousButton()
                     updateProgress()
                     updateToolbar()
-                }
-
-                override fun onPageScrolled(
-                    position: Int, positionOffset: Float, positionOffsetPixels: Int
-                ) {
-                    //Implementation pending
-                }
-
-                override fun onPageScrollStateChanged(state: Int) {
-                    //Implementation pending
                 }
             })
         }
@@ -335,7 +323,7 @@ class NeatStepperLayout : LinearLayout {
     }
 
     private fun getCurrentStep(): Step {
-        return stepperPagerAdapter.getItem(stepperViewPager.currentItem) as Step
+        return stepperPagerAdapter.getStepAt(stepperViewPager.currentItem)
     }
 
     private fun applyStepperViewProperties() {

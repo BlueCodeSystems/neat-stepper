@@ -1,0 +1,96 @@
+name: Maintain JitPack badges
+on:
+  push:
+    branches: ["master"]
+    tags: ["**"]
+  workflow_dispatch: {}
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute values
+        id: vars
+        shell: bash
+        run: |
+          set -euo pipefail
+          IFS='/' read -r OWNER REPO <<<"${GITHUB_REPOSITORY}"
+          git fetch --tags --force --prune 2>/dev/null || true
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
+          echo "repo=$REPO" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Update README badges
+        shell: bash
+        run: |
+          set -euo pipefail
+          OWNER='${{ steps.vars.outputs.owner }}'
+          REPO='${{ steps.vars.outputs.repo }}'
+          LATEST_TAG='${{ steps.vars.outputs.latest_tag }}'
+
+          VERSION_IMG="https://jitpack.io/v/${OWNER}/${REPO}.svg"
+          if [ -n "$LATEST_TAG" ]; then
+            VERSION_LINK="https://jitpack.io/#${OWNER}/${REPO}:${LATEST_TAG}"
+          else
+            VERSION_LINK="https://jitpack.io/#${OWNER}/${REPO}"
+          fi
+          BUILD_IMG="https://jitpack.io/build/${OWNER}/${REPO}.svg"
+          BUILD_LINK="https://jitpack.io/#${OWNER}/${REPO}"
+
+          BADGE_BLOCK_START='<!-- JITPACK BADGES:START -->'
+          BADGE_BLOCK_END='<!-- JITPACK BADGES:END -->'
+          VERSION_MD="[![JitPack](${VERSION_IMG})](${VERSION_LINK})"
+          BUILD_MD="[![Build (master)](${BUILD_IMG})](${BUILD_LINK})"
+
+          NEW_BLOCK=$(printf "%s\n%s\n%s\n%s\n" "$BADGE_BLOCK_START" "$VERSION_MD" "$BUILD_MD" "$BADGE_BLOCK_END")
+
+          FILE="README.md"
+          if [ ! -f "$FILE" ]; then
+            if [ -f "README.MD" ]; then FILE="README.MD"; elif [ -f "README" ]; then FILE="README"; fi
+          fi
+
+          if [ ! -f "$FILE" ]; then
+            TITLE="# ${REPO}"
+            printf "%s\n\n%s\n\n" "$TITLE" "$NEW_BLOCK" > README.md
+          else
+            if grep -q "$BADGE_BLOCK_START" "$FILE"; then
+              awk -v start="$BADGE_BLOCK_START" -v end="$BADGE_BLOCK_END" -v repl="$NEW_BLOCK" '
+                BEGIN{inblk=0}
+                index($0,start){print repl; inblk=1; next}
+                index($0,end){inblk=0; next}
+                inblk{next}
+                /\[!\[JitPack\]\(https:\/\/jitpack\.io\/v\// {next}
+                /\[!\[Build \(master\)\]\(https:\/\/jitpack\.io\/build\// {next}
+                {print}
+              ' "$FILE" > "$FILE.tmp"
+            else
+              CONTENT=$(cat "$FILE")
+              printf "%s\n\n%s\n" "$NEW_BLOCK" "$CONTENT" > "$FILE.tmp"
+              awk 'BEGIN{inblk=0}
+                /<!-- JITPACK BADGES:START -->/{inblk=1}
+                /<!-- JITPACK BADGES:END -->/{inblk=0}
+                {print}
+              ' "$FILE.tmp" | awk '
+                BEGIN{inblk=0}
+                /<!-- JITPACK BADGES:START -->/{inblk=1}
+                /<!-- JITPACK BADGES:END -->/{inblk=0}
+                inblk{print; next}
+                /\[!\[JitPack\]\(https:\/\/jitpack\.io\/v\// {next}
+                /\[!\[Build \(master\)\]\(https:\/\/jitpack\.io\/build\// {next}
+                {print}
+              ' > "$FILE.tmp2" && mv "$FILE.tmp2" "$FILE.tmp"
+            fi
+            mv "$FILE.tmp" "$FILE"
+          fi
+
+      - name: Commit changes if any
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(readme): ensure JitPack badges (latest tag + master build)"
+          file_pattern: |
+            README*

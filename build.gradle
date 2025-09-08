@@ -1,34 +1,85 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
-buildscript {
-    ext.kotlin_version = '1.3.61'
-    repositories {
-        google()
-        jcenter()
-        mavenCentral()
-
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-    }
+plugins {
+  id 'com.android.application' version '8.6.0' apply false
+  id 'com.android.library'     version '8.6.0' apply false
+  id 'org.jetbrains.kotlin.android' version '1.9.25' apply false
+  id 'io.codearte.nexus-staging' version '0.30.0'
 }
 
 allprojects {
-    repositories {
-        google()
-        jcenter()
-        mavenCentral()
-    }
+  group = findProperty('GROUP') ?: 'com.nerdstone'
+  version = findProperty('VERSION_NAME') ?: '1.0.6-SNAPSHOT'
 
-    tasks.withType(Javadoc) {
-        excludes = ['**/*.kt'] // < ---- Exclude all kotlin files from javadoc file.
-    }
+  repositories {
+    mavenLocal()
+    google()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://cloudant.github.io/cloudant-sync-eap/repository' }
+    maven { url 'https://s3.amazonaws.com/repo.commonsware.com' }
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+  }
+
+  // Legacy javadoc tasks may fail under AGP 8; safely disable if present
+  tasks.matching { it.name == 'javadoc' || it.class.name.contains('Javadoc') }.configureEach {
+    enabled = false
+  }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+// Dependency resolution tweaks / exclusions (customize as needed)
+allprojects { project ->
+  configurations.all {
+    resolutionStrategy {
+      dependencySubstitution {
+        // Examples - adjust or remove if not relevant for this repo
+        // substitute(module('com.github.BlueCodeSystems:opensrp-client-core'))
+        //   .using(module('io.github.bluecodesystems:opensrp-client-core:6.2.2'))
+        // substitute(module('io.github.bluecodesystems:android-p2p-sync'))
+        //   .using(module('com.github.BlueCodeSystems:android-p2p-sync:v0.4.3'))
+      }
+      force 'com.commonsware.cwac:saferoom.x:1.3.0'
+    }
+    exclude group: 'com.commonsware.cwac', module: 'saferoom'
+  }
+}
+
+// Tests: JDK17 module opens and conservative forking
+subprojects { p ->
+  tasks.withType(Test).configureEach { t ->
+    maxParallelForks = 1
+    forkEvery = 0
+    jvmArgs(
+      '--add-opens=java.base/java.lang=ALL-UNNAMED',
+      '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+      '--add-opens=java.base/java.io=ALL-UNNAMED',
+      '--add-opens=java.base/java.net=ALL-UNNAMED',
+      '--add-opens=java.base/java.util=ALL-UNNAMED',
+      '--add-opens=java.base/java.text=ALL-UNNAMED',
+      '--add-opens=java.base/java.security=ALL-UNNAMED',
+      '--add-opens=java.base/jdk.internal.reflect=ALL-UNNAMED',
+      '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
+      '--add-opens=java.base/jdk.internal.util=ALL-UNNAMED',
+      '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+      '--add-opens=java.base/sun.security.util=ALL-UNNAMED',
+      '--add-opens=java.desktop/java.awt.font=ALL-UNNAMED',
+      '--add-exports=java.base/jdk.internal.reflect=ALL-UNNAMED'
+    )
+  }
+}
+
+// Compile memory
+allprojects {
+  tasks.withType(JavaCompile).configureEach {
+    options.fork = true
+    options.forkOptions.memoryMaximumSize = '2048m'
+  }
+}
+
+// Optional: Nexus staging config at root (configure creds via -PsonatypeUsername/-PsonatypePassword)
+nexusStaging {
+  serverUrl = "https://s01.oss.sonatype.org/service/local/"
+}
+
+tasks.register('clean', Delete) {
+  delete rootProject.buildDir
 }

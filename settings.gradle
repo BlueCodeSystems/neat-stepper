@@ -1,1 +1,23 @@
+pluginManagement {
+  repositories {
+    mavenLocal()
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+}
+
 include ':sample', ':neat-android-stepper'
+
+// Optional: prefer local sibling builds when enabled
+def sibling = { String p -> file(p)?.exists() }
+def useLocalSiblings = (gradle.startParameter.projectProperties['useLocalSiblings'] ?: System.getenv('USE_LOCAL_SIBLINGS'))?.toString()?.toBoolean() ?: false
+
+// Example sibling includeBuild wiring (disabled by default)
+if (useLocalSiblings && sibling('../opensrp-client-core')) {
+  includeBuild('../opensrp-client-core') {
+    dependencySubstitution {
+      substitute(module('io.github.bluecodesystems:opensrp-client-core')).using(project(':opensrp-core'))
+    }
+  }
+}
