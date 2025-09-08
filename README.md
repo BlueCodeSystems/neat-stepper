@@ -3,12 +3,9 @@
 [![Build (master)](https://jitpack.io/build/BlueCodeSystems/neat-stepper.svg)](https://jitpack.io/#BlueCodeSystems/neat-stepper)
 <!-- JITPACK BADGES:END -->
 
-  
+ 
 # Neat Android Stepper  
 
-
-[ ![Download](https://api.bintray.com/packages/ellykits/nerdstone/neat-android-stepper/images/download.svg) ](https://bintray.com/ellykits/nerdstone/neat-android-stepper/_latestVersion) 
- 
 
 A Library that allows you to implement android stepper in your application.   
 Steppers are used to display progress of logically separated sections normally referred to as `steps`. This library was inspired by stepstone-tech [Android Material Stepper Library](https://www.google.com/design/spec/components/steppers.html)  
@@ -39,66 +36,42 @@ Code & features mentioned in [Getting started](#getting-started) are showcased i
     
 ## Getting started  
 
-### Download (From JCenter)
-Add the library as a dependency to your app build.gradle file
+### Requirements
+- minSdk 18
+- targetSdk 35 (compileSdk 35)
+- Kotlin/JVM target 17
+
+### Install (JitPack)
+Add JitPack to your repositories, then add the dependency.
+
+Gradle settings (Gradle 7+ recommended):
+```groovy
+// settings.gradle
+dependencyResolutionManagement {
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+  }
+}
+```
+
+Older Gradle (root build.gradle):
+```groovy
+allprojects {
+  repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+  }
+}
+```
+
+Add the dependency (use the badge above for the latest version/tag):
 ```groovy
 dependencies {
-    //....
-	implementation "com.nerdstone:neat-android-stepper:1.0.6"
-	//....
-
-}
-``` 
-### Download (From GitHub Packages)
-This library is available as a git package [Neat Stepper Packages](https://github.com/ellykits/neat-android-stepper/packages). 
-At the moment GitHub requires you to authenticate to download Android Libraries hosted on GitHub packages. To do so you will need your **personal access token** and your GitHub **username**. Follow these steps to add the library as a dependency to your app.
-
-**Step 1** : Generate a Personal Access Token for GitHub [How to generate GitHub personal access token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line)
-
-**Step 2** : Store your GitHub — Personal Access Token details 
-
-Add these content to the **`local.properties`** file inside the root directory of your project. 
-.
-```
-gpr.usr=YOUR_GITHUB_USERID
-gpr.key=YOUR_PERSONAL_ACCESS_TOKEN
-```
-**Step 3** : Update `build.gradle` for the application module
-
-```groovy
-//For publishing dependency to GitHub package
-def githubProperties = new Properties()
-//Read the github properties content
-githubProperties.load(new FileInputStream(rootProject.file("local.properties")))
-
-android {
-     //...
-     // include inside the android closure
-    repositories {  
-      maven {  
-              name = "GitHubPackages"  
-              /**  
-             * Configure path of the package repository on Github using the GITHUB_USER_ID and * Git Repository */  
-              url = uri("https://maven.pkg.github.com/ellykits/neat-android-stepper")  
-              credentials {  
-                  /** get credentials from local.properties in root project folder file with  
-                 ** gpr.usr=GITHUB_USER_ID & gpr.key=PERSONAL_ACCESS_TOKEN otherwise ** Set env variable GPR_USER & GPR_API_KEY**/  
-                  username = githubProperties['gpr.usr'] ?: System.getenv("GPR_USER")  
-                  password = githubProperties['gpr.key'] ?: System.getenv("GPR_API_KEY")  
-             } 
-        }
-    }
-    //...
-}
-
-```
-Add the library in the dependency section of your application's `build.gradle` file. Update the version accordingly 
-```groovy
-dependencies {
-	//consume library - use the latest version available on github packages
-	implementation "com.nerdstone:neat-android-stepper:1.0.6"
-	//....
-
+  implementation "com.github.BlueCodeSystems:neat-android-stepper:1.0.6"
 }
 ```
 ### Create layout in XML  

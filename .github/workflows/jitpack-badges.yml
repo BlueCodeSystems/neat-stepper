@@ -126,3 +126,25 @@ jobs:
           commit_author: AndreLesa <3635843+AndreLesa@users.noreply.github.com>
           file_pattern: |
             README*
+
+      - name: Trigger JitPack build (master)
+        if: github.ref == 'refs/heads/master'
+        shell: bash
+        run: |
+          set -euo pipefail
+          OWNER='${{ steps.vars.outputs.owner }}'
+          REPO='${{ steps.vars.outputs.repo }}'
+          ARTIFACT=$(grep -E '^POM_SETTING_ARTIFACT_ID=' gradle.properties | sed 's/^[^=]*=//' || true)
+          if [ -z "$ARTIFACT" ]; then ARTIFACT="$REPO"; fi
+
+          URL_DIR="https://jitpack.io/com/github/${OWNER}/${REPO}/master-SNAPSHOT/"
+          URL_POM="https://jitpack.io/com/github/${OWNER}/${REPO}/master-SNAPSHOT/${ARTIFACT}-master-SNAPSHOT.pom"
+          URL_BADGE="https://jitpack.io/build/${OWNER}/${REPO}.svg"
+
+          echo "Pinging JitPack to trigger initial master build..."
+          # Hit the directory and an expected POM path to trigger build; ignore failures
+          (curl -fsSIL "$URL_DIR" || true) >/dev/null
+          (curl -fsSIL "$URL_POM" || true) >/dev/null
+          # Also touch the build badge (may warm cache)
+          (curl -fsSIL "$URL_BADGE" || true) >/dev/null
+          echo "Pinged: $URL_DIR and $URL_POM"
