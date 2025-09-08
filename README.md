@@ -1,5 +1,5 @@
 <!-- JITPACK BADGES:START -->
-[![JitPack](https://jitpack.io/v/BlueCodeSystems/neat-stepper.svg)](https://jitpack.io/#BlueCodeSystems/neat-stepper)
+[![JitPack](https://jitpack.io/v/BlueCodeSystems/neat-stepper.svg)](https://jitpack.io/#BlueCodeSystems/neat-stepper:v1.0.6)
 [![Build (master)](https://jitpack.io/build/BlueCodeSystems/neat-stepper.svg)](https://jitpack.io/#BlueCodeSystems/neat-stepper)
 <!-- JITPACK BADGES:END -->
 
